@@ -32,9 +32,9 @@ public class VotingController {
             method = RequestMethod.POST,
             consumes = "application/json",
             produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public ResponseEntity createUser(@PathVariable String key, @RequestBody User user) {
+    public ResponseEntity createUser(@PathVariable String key, @RequestBody JsonNode jsonNode) {
         logger.info("Entered create for key: " + key);
-        service.createUser(key, user);
+        service.createUser(key, jsonNode);
         return new ResponseEntity(HttpStatus.CREATED);
     }
 
@@ -42,9 +42,9 @@ public class VotingController {
             method = RequestMethod.PUT,
             consumes = "application/json",
             produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public ResponseEntity updateUser(@PathVariable String key, @RequestBody User user) {
+    public ResponseEntity updateUser(@PathVariable String key, @RequestBody JsonNode node) {
         logger.info("Entered create for key: " + key);
-        service.UpdateUser(key, user);
+        service.UpdateUser(key, node);
         return new ResponseEntity(HttpStatus.CREATED);
     }
 

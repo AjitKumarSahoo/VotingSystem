@@ -2,20 +2,17 @@ package org.voting.repository;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import java.util.Date;
-
 public interface IDataHandler {
 
-    /* ********** Database APIs *******/
-    void createUser(String userId, User user);
+    void createUser(String userId, JsonNode jsonNode);
 
     User getUser(String userId);
 
-    void updateUser(String userId, User user);
+    void updateUser(String userId, JsonNode jsonNode);
 
     void deleteUser(String userId);
 
-    void createPost(String postId, JsonNode post);
+    void createPost(String postId, JsonNode jsonNode);
 
     Post getPost(String postId);
 

@@ -7,8 +7,6 @@ import org.voting.repository.IDataHandler;
 import org.voting.repository.Post;
 import org.voting.repository.User;
 
-import java.util.Date;
-
 @Service
 public class VotingService {
 
@@ -19,8 +17,8 @@ public class VotingService {
         this.dataHandler = dataHandler;
     }
 
-    public void createUser(String key, User user) {
-        dataHandler.createUser(key, user);
+    public void createUser(String key, JsonNode jsonNode) {
+        dataHandler.createUser(key, jsonNode);
     }
 
     public User readUser(String key) {
@@ -31,8 +29,8 @@ public class VotingService {
         dataHandler.deleteUser(key);
     }
 
-    public void UpdateUser(String key, User user) {
-        dataHandler.updateUser(key, user);
+    public void UpdateUser(String key, JsonNode jsonNode) {
+        dataHandler.updateUser(key, jsonNode);
     }
 
     public void createPost(String postId, JsonNode post) {

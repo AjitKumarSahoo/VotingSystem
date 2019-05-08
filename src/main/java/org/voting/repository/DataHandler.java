@@ -44,7 +44,7 @@ public class DataHandler implements IDataHandler {
     private static final String POST_CREATION_DATE = "CreationDate";
     private static final String POST_END_DATE = "EndDate";
 
-    private DynamoDB dynamoDB;
+    private static DynamoDB dynamoDB;
 
     @PostConstruct
     void init() {
@@ -75,24 +75,33 @@ public class DataHandler implements IDataHandler {
     private void createTable(String tableName, String hashKey,
                              long readUnit, long writeUnit) throws InterruptedException {
         logger.info("Creating " + tableName + "...");
-        Table table = dynamoDB.createTable(tableName,
-                Collections.singletonList(new KeySchemaElement(hashKey, KeyType.HASH)),
-                Collections.singletonList(new AttributeDefinition(hashKey, ScalarAttributeType.S)),
-                new ProvisionedThroughput(readUnit, writeUnit));
-        table.waitForActive();
-        logger.info(tableName + " status: " + table.getDescription().getTableStatus());
+        try {
+            Table table = dynamoDB.createTable(tableName,
+                    Collections.singletonList(new KeySchemaElement(hashKey, KeyType.HASH)),
+                    Collections.singletonList(new AttributeDefinition(hashKey, ScalarAttributeType.S)),
+                    new ProvisionedThroughput(readUnit, writeUnit));
+            table.waitForActive();
+            logger.info(tableName + " status: " + table.getDescription().getTableStatus());
+        } catch (ResourceInUseException e) {
+            logger.info(tableName + " already exists");
+            //table already exists..do nothing.
+        }
     }
 
 
     @Override
-    public void createUser(String userId, User user) {
+    public void createUser(String userId, JsonNode jsonNode) {
         Table table = dynamoDB.getTable(USER_TABLE_NAME);
         try {
-            if (StringUtils.isEmpty(userId) || StringUtils.isEmpty(user.getEmailId())) {
+            if (!jsonNode.has(EMAIL_ID)) {
+                throw new RuntimeException("Email Id must be provided.");
+            }
+            String emailId = jsonNode.get(EMAIL_ID).asText();
+            if (StringUtils.isEmpty(userId) || StringUtils.isEmpty(emailId)) {
                 throw new RuntimeException("UserId and EmailId should not be null.");
             }
 
-            Item item = new Item().withPrimaryKey("UserId", user.getUserId()).withString("EmailId", user.getEmailId());
+            Item item = new Item().withPrimaryKey("UserId", userId).withString("EmailId", emailId);
             table.putItem(item);
         } catch (Exception e) {
             logger.error("Inserting user into table failed.");
@@ -104,7 +113,11 @@ public class DataHandler implements IDataHandler {
     public User getUser(String userId) {
         Table table = dynamoDB.getTable(USER_TABLE_NAME);
         try {
-            Item item = table.getItem("UserId", userId, "EmailId", null);
+            if (StringUtils.isEmpty(userId)) {
+                return null;
+            }
+
+            Item item = table.getItem(USER_ID_KEY, userId, EMAIL_ID, null);
             if (item == null) {
                 logger.warn("User with " + userId + " is not present in " + USER_TABLE_NAME);
                 return null;
@@ -124,18 +137,22 @@ public class DataHandler implements IDataHandler {
     }
 
     @Override
-    public void updateUser(String userId, User user) {
+    public void updateUser(String userId, JsonNode jsonNode) {
         Table table = dynamoDB.getTable(USER_TABLE_NAME);
         try {
-            UpdateItemSpec updateItemSpec = new UpdateItemSpec().withPrimaryKey("UserId", user.getUserId())
+            if (!jsonNode.has(EMAIL_ID) || StringUtils.isEmpty(jsonNode.get(EMAIL_ID).asText())) {
+                return;
+            }
+            UpdateItemSpec updateItemSpec = new UpdateItemSpec().withPrimaryKey(USER_ID_KEY, userId)
                     .withUpdateExpression("set #a = :val").withNameMap(new NameMap().with("#a", "EmailId"))
-                    .withValueMap(new ValueMap().withString(":val", user.getEmailId())).withReturnValues(ReturnValue.ALL_NEW);
+                    .withValueMap(new ValueMap().withString(":val", jsonNode.get(EMAIL_ID).asText()))
+                    .withReturnValues(ReturnValue.ALL_NEW);
 
             UpdateItemOutcome outcome = table.updateItem(updateItemSpec);
-            logger.info("User " + user.getUserId() + " is successfully updated.");
+            logger.info("User " + userId + " is successfully updated.");
             logger.info(outcome.getItem().toJSONPretty());
         } catch (Exception e) {
-            logger.error("Updating user " + user.getUserId() + "failed.");
+            logger.error("Updating user " + userId + "failed.");
             logger.error(e.getMessage());
         }
     }
@@ -145,7 +162,7 @@ public class DataHandler implements IDataHandler {
         Table table = dynamoDB.getTable(USER_TABLE_NAME);
 
         try {
-            DeleteItemSpec deleteItemSpec = new DeleteItemSpec().withPrimaryKey("UserId", userId).withReturnValues(ReturnValue.ALL_OLD);
+            DeleteItemSpec deleteItemSpec = new DeleteItemSpec().withPrimaryKey(USER_ID_KEY, userId).withReturnValues(ReturnValue.ALL_OLD);
             DeleteItemOutcome outcome = table.deleteItem(deleteItemSpec);
 
             logger.info("User " + userId + " was deleted.");
