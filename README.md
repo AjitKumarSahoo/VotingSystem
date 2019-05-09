@@ -1,7 +1,7 @@
 ## Voting System ##
 
 **Problem statement**: VotingSystem/VotingSystem_problem_statement.txt </br>
-**Design Doc**: https://docs.google.com/document/d/1dMLvaUTW1AOPfGZnHg1seIuN5jXd82uNSFpQCCAcm8w/edit?usp=sharing
+**Design Doc**: [doc_link](https://docs.google.com/document/d/1dMLvaUTW1AOPfGZnHg1seIuN5jXd82uNSFpQCCAcm8w/edit?usp=sharing)
 
 There are totally 3 services present in this voting system. PostTracker project has 2 modules representing 2 services: Post Tracker service and Notification service. VotingSystem1 folder contains Voting service.
 
