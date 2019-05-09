@@ -15,7 +15,7 @@ import org.voting.Service.PostProcessor;
 public class Application {
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
-        new PostProcessor().processPost();
         new PostCleanUpUtility().cleanUp();
+        new PostProcessor().processPost();
     }
 }

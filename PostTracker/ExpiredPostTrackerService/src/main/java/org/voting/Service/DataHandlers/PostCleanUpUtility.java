@@ -11,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import org.voting.ClientHelper;
 import org.voting.DateUtility;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import static org.voting.Service.DataHandlers.DatabaseReader.POST_END_DATE;
@@ -25,40 +27,52 @@ public class PostCleanUpUtility {
     private static final Logger logger = LoggerFactory.getLogger(PostCleanUpUtility.class.getName());
     private static final int EXPIRY_INTERVAL_IN_MIN = 10;
     private final ClientHelper clientHelper;
+    private final ExecutorService executorService;
 
     public PostCleanUpUtility() {
         clientHelper = new ClientHelper();
+        executorService = Executors.newFixedThreadPool(1);
     }
 
     /**
      * Fetch expired posts (expired 10 minutes back) with status DONE and delete them
      */
     public void cleanUp() {
-        while (true) {
-            String startTime = DateUtility.getTimeBeforeNMinutes(EXPIRY_INTERVAL_IN_MIN);
+        executorService.submit(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        clientHelper.makeSurePostTableExists();
+                        String startTime = DateUtility.getTimeBeforeNMinutes(EXPIRY_INTERVAL_IN_MIN);
 
-            String projExpr = POST_ID_KEY + ", " + POST_END_DATE + ", " + POST_STATUS;
-            ScanSpec scanSpec = new ScanSpec()
-                    .withProjectionExpression(projExpr)
-                    .withFilterExpression("#ed <= :tm AND #st = :v")
-                    .withNameMap(new NameMap().with("#ed", "EndDate").with("#st", POST_STATUS))
-                    .withValueMap(new ValueMap().withString(":tm", startTime).withString(":v", "DONE"));
-            try {
-                ItemCollection<ScanOutcome> items = clientHelper.getPostTable().scan(scanSpec);
-                for (Item item : items) {
-                    clientHelper.getPostTable().deleteItem(POST_ID_KEY, item.getString(POST_ID_KEY));
-                    logger.info("Successfully deleted post " + item.toJSONPretty());
+                        String projExpr = POST_ID_KEY + ", " + POST_END_DATE + ", " + POST_STATUS;
+                        ScanSpec scanSpec = new ScanSpec()
+                                .withProjectionExpression(projExpr)
+                                .withFilterExpression("#ed <= :tm AND #st = :v")
+                                .withNameMap(new NameMap().with("#ed", "EndDate").with("#st", POST_STATUS))
+                                .withValueMap(new ValueMap().withString(":tm", startTime).withString(":v", "DONE"));
+                        ItemCollection<ScanOutcome> items = clientHelper.getPostTable().scan(scanSpec);
+                        for (Item item : items) {
+                            clientHelper.getPostTable().deleteItem(POST_ID_KEY, item.getString(POST_ID_KEY));
+                            logger.info("Successfully deleted post " + item.toJSONPretty());
+                        }
+
+                        try {
+                            TimeUnit.MINUTES.sleep(8); // better to have a little bit of overlap with previous cleanup window
+                        } catch (InterruptedException e) {
+                            logger.warn("Post cleaning thread got interrupted during sleep.");
+                        }
+                    } catch (Exception e) {
+                        logger.error("Exception during post clean up.");
+                        logger.error(e.getMessage());
+                        try {
+                            TimeUnit.SECONDS.sleep(30);
+                        } catch (InterruptedException ignore) {
+                        }
+                    }
                 }
-            } catch (Exception e) {
-                logger.error("Unable to scan the table:");
-                logger.error(e.getMessage());
             }
-
-            try {
-                TimeUnit.MINUTES.sleep(9); // better to have a little bit of overlap
-            } catch (InterruptedException e) {
-                logger.warn("Post cleaning thread got interrupted during sleep.");
-            }
-        }
+        });
     }
 }
