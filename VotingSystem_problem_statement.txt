@@ -1,0 +1,26 @@
+Voting system (Rest API and backend):
+
+Design a voting system, meet the following scenarios:
+Persona/Scenario:
+1. Post owner: login to system to create a post with different options, specify end date and send/broadcast to participants
+2. Participant: login to system to vote on the post
+3. System: when post ends, system will calculate the winner option and inform post owner. (You can assume post owner is already in the system with all the needed information)
+
+Basic requirements:
+1. Post owner create a post with options
+2. Participants vote on the post (one user can only vote once)
+3. System calculates the winner option (which gets the most votes)
+4. User needs to register to the system if he does not exist in the system
+
+Nice to have:
+Post owner can extend the voting period (end date)
+Participants can modify their vote before voting ends.
+
+Expect days to finish the project: 3 days
+
+Any technology or database is fine. (Jave will be preferred for programming language). 
+
+Think about performance or scalability.
+
+Use case example:
+The team is going to work late tonight, manager needs to order dinner for the team, so he creates a post "tonight's dinner", the options are food type such as American, Indian, Chinese, Japanese etc, it has two hours for the team member to vote, each person can and should only vote once, by the end of two hours, system sends the winner option to the manager so manager can order food for everyone.
