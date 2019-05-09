@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
+import org.voting.PostStatus;
 import org.voting.service.NotificationHandler;
 
 import javax.annotation.PostConstruct;
@@ -48,10 +49,6 @@ public class DataHandler implements IDataHandler {
 
     private NotificationHandler notificationHandler;
     private static DynamoDB dynamoDB;
-
-    private enum PostStatus {
-        NEW, EXPIRED, DONE
-    }
 
     @PostConstruct
     void init() {
