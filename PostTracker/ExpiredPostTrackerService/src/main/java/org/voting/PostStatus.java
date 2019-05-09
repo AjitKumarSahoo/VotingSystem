@@ -5,5 +5,5 @@ package org.voting;
  * Date: 5/8/2019.
  */
 public enum PostStatus {
-    NEW, EXPIRED, DONE
+    EXPIRED, DONE
 }

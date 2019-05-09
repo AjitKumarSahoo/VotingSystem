@@ -1,4 +1,4 @@
-package org.voting.Service.Handlers;
+package org.voting.Service.DataHandlers;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.services.sqs.AmazonSQS;
@@ -16,7 +16,10 @@ import org.slf4j.LoggerFactory;
 public class MessageQueueHandler {
     private static final Logger logger = LoggerFactory.getLogger(MessageQueueHandler.class.getName());
 
-    public static final String QUEUE_NAME = "PostQueue";
+    private static final String QUEUE_NAME = "PostQueue";
+    private static final String KEY_VALUE_SEPARATOR = ":";
+    private static final String ATTR_SEPARATOR = ",";
+
     private final AmazonSQS sqs;
     private final String queueUrl;
 
@@ -41,11 +44,12 @@ public class MessageQueueHandler {
 
     public void sendMessageAndUpdatePostStatusInDB(String postId, String emailId, String winner) {
         final SendMessageRequest sendMessageRequest = new SendMessageRequest();
-        sendMessageRequest.withMessageBody("PostId=" + postId + ",EmailId=" + emailId + ",Option=" + winner);
+        sendMessageRequest.withMessageBody("PostId" + KEY_VALUE_SEPARATOR + postId + ATTR_SEPARATOR +
+                                           "EmailId" + KEY_VALUE_SEPARATOR + emailId + ATTR_SEPARATOR +
+                                           "Option" + KEY_VALUE_SEPARATOR + winner);
         sendMessageRequest.withQueueUrl(queueUrl);
         try {
             sqs.sendMessage(sendMessageRequest);
-            DatabaseReader.getInstance().markPostAsDone(postId);
         } catch (final AmazonClientException ace) {
             logger.error(ace.getMessage());
         }

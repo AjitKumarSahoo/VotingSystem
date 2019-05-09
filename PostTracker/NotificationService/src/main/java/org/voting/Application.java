@@ -1,11 +1,8 @@
 package org.voting;
 
-//import org.springframework.boot.autoconfigure.SpringBootApplication;
-
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.voting.Service.DataHandlers.PostCleanUpUtility;
-import org.voting.Service.PostProcessor;
+import org.voting.Service.MessageProcessor;
 
 /**
  * Author: Ajit Ku. Sahoo
@@ -15,7 +12,6 @@ import org.voting.Service.PostProcessor;
 public class Application {
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);
-        new PostProcessor().processPost();
-        new PostCleanUpUtility().cleanUp();
+        new MessageProcessor().processMessage();
     }
 }

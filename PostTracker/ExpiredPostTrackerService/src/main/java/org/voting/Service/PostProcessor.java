@@ -2,8 +2,8 @@ package org.voting.Service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.voting.Service.Handlers.DatabaseReader;
-import org.voting.Service.Handlers.MessageQueueHandler;
+import org.voting.Service.DataHandlers.DatabaseReader;
+import org.voting.Service.DataHandlers.MessageQueueHandler;
 import org.voting.PostData;
 
 import java.util.HashMap;
@@ -24,22 +24,28 @@ public class PostProcessor {
 
     private final ExecutorService executorService;
     private final MessageQueueHandler queueHandler;
+    private final DatabaseReader databaseReader;
 
     public PostProcessor() {
         executorService = Executors.newFixedThreadPool(100); // need to configure based upon system usage
         queueHandler = new MessageQueueHandler();
+        databaseReader = new DatabaseReader();
     }
 
     public void processPost() {
-        try {
-            while(true) {
-                for (PostData post : DatabaseReader.getInstance().getExpiredPosts()) {
+        while (true) {
+            try {
+                for (PostData post : databaseReader.getExpiredPosts()) {
                     executorService.submit(new WinnerDecider(post));
                 }
-                TimeUnit.MINUTES.sleep(POST_READ_INTERVAL_IN_MIN);
+            } catch (Exception e) {
+                logger.error(e.getMessage());
             }
-        } catch (InterruptedException e) {
-            logger.error(e.getMessage());
+            try {
+                TimeUnit.MINUTES.sleep(POST_READ_INTERVAL_IN_MIN);
+            } catch (InterruptedException e) {
+                logger.error(e.getMessage());
+            }
         }
     }
 
@@ -73,7 +79,7 @@ public class PostProcessor {
         }
 
         private Map<String, Integer> getOption2CountMap(Map<String, String> user2optionMap) {
-            Map<String, Integer> option2CountMap = new HashMap<String, Integer>();
+            Map<String, Integer> option2CountMap = new HashMap<>();
             for (String user : user2optionMap.keySet()) {
                 String option = user2optionMap.get(user);
                 if (option2CountMap.containsKey(option)) {
