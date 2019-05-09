@@ -26,9 +26,8 @@ public class ClientHelper {
 
     /**
      * Keep on describing the table until it is found. Voting service is responsible to create PostInfo table
-     * @return PostInfo table
      */
-    public Table getPostTable() {
+    public void makeSurePostTableExists() {
         while (true) {
             try {
                 dynamoDBClient.describeTable(new DescribeTableRequest().withTableName(POST_TABLE_NAME));
@@ -40,6 +39,9 @@ public class ClientHelper {
                 }
             }
         }
+    }
+
+    public Table getPostTable() {
         return dynamoDB.getTable(POST_TABLE_NAME);
     }
 }

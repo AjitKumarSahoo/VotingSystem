@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
+import org.voting.service.NotificationHandler;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -44,10 +45,12 @@ public class DataHandler implements IDataHandler {
     private static final String POST_CREATION_DATE = "CreationDate";
     private static final String POST_END_DATE = "EndDate";
 
+    private NotificationHandler notificationHandler;
     private static DynamoDB dynamoDB;
 
     @PostConstruct
     void init() {
+        notificationHandler = new NotificationHandler();
         AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard().withRegion("us-west-2").build();
         dynamoDB = new DynamoDB(client);
         createUserTable();
@@ -187,14 +190,23 @@ public class DataHandler implements IDataHandler {
                     .withString(POST_END_DATE, post.getEndDate());
 
             PutItemOutcome putItemOutcome = table.putItem(item);
-            logger.info("Created a post: " + putItemOutcome);
-
-            //todo:fix: broadcast email to participants
+            logger.info("Successfully created a post: " + putItemOutcome);
+            boolean broadCastingSuccessful = notificationHandler.broadcast(postId, getParticipantsEmailId(jsonNode));
+            if (!broadCastingSuccessful) {
+                table.deleteItem(POST_ID_KEY, postId);
+            }
 
         } catch (Exception e) {
             logger.error("Creating post failed.");
             logger.error(e.getMessage());
         }
+    }
+
+    private void validateInputData(JsonNode jsonNode) throws IOException {
+        validateOwnerId(jsonNode);
+        validateOptions(jsonNode);
+        validateParticipants(jsonNode);
+        validateEndDate(jsonNode);
     }
 
     private Post buildPost(JsonNode jsonNode) throws IOException {
@@ -226,11 +238,9 @@ public class DataHandler implements IDataHandler {
         return user2optionMap;
     }
 
-    private void validateInputData(JsonNode jsonNode) throws IOException {
-        validateOwnerId(jsonNode);
-        validateOptions(jsonNode);
-        validateParticipants(jsonNode);
-        validateEndDate(jsonNode);
+    private Set<String> getParticipantsEmailId(JsonNode jsonNode) throws IOException {
+        List<String> participants = getJsonObjectReader().readValue(jsonNode.get("Participants"));
+        return participants.stream().map(userId -> getUser(userId).getEmailId()).collect(Collectors.toSet());
     }
 
     private void validateOwnerId(JsonNode jsonNode) {
@@ -419,5 +429,6 @@ public class DataHandler implements IDataHandler {
     @PreDestroy
     private void cleanUp() {
         dynamoDB = null;
+        notificationHandler = null;
     }
 }

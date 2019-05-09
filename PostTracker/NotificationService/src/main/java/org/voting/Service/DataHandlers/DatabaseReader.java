@@ -27,14 +27,13 @@ public class DatabaseReader {
     private static final String POST_ID_KEY = "PostId";
     private static final String POST_STATUS = "Status";
 
-    private final Table table;
     private final DynamoDB dynamoDB;
     private volatile static DatabaseReader instance;
 
     private DatabaseReader() {
         AmazonDynamoDB client = AmazonDynamoDBClientBuilder.standard().withRegion("us-west-2").build();
         dynamoDB = new DynamoDB(client);
-        table = getTable(client);
+        makeSurePostTableExists(client);
     }
 
     public static DatabaseReader getInstance() {
@@ -51,9 +50,8 @@ public class DatabaseReader {
     /**
      * Keep on describing the table until it is found. Voting service is responsible to create PostInfo table
      * @param client - Amazon client
-     * @return PostInfo table
      */
-    private Table getTable(AmazonDynamoDB client) {
+    private void makeSurePostTableExists(AmazonDynamoDB client) {
         while (true) {
             try {
                 client.describeTable(new DescribeTableRequest().withTableName(POST_TABLE_NAME));
@@ -65,7 +63,6 @@ public class DatabaseReader {
                 }
             }
         }
-        return dynamoDB.getTable(POST_TABLE_NAME);
     }
 
     /**
@@ -79,6 +76,7 @@ public class DatabaseReader {
                 .withValueMap(new ValueMap().withString(":val", "DONE"))
                 .withReturnValues(ReturnValue.ALL_NEW);
         try {
+            Table table = dynamoDB.getTable(POST_TABLE_NAME);
             table.updateItem(updateItemSpec);
         } catch (Exception e) {
             logger.error(e.getMessage());

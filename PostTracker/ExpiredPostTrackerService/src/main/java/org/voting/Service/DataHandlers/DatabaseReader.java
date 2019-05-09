@@ -29,10 +29,11 @@ public class DatabaseReader {
     private static final String POST_OWNER_EMAIL_ID = "OwnerEmailId";
     private static final String POST_USER_2_OPTION_MAP = "User2OptionMap";
 
-    private Table table;
+    private final ClientHelper clientHelper;
 
     public DatabaseReader() {
-        table = new ClientHelper().getPostTable();
+        clientHelper = new ClientHelper();
+        clientHelper.makeSurePostTableExists();
     }
 
     /**
@@ -53,7 +54,7 @@ public class DatabaseReader {
                 .withValueMap(new ValueMap().withString(":start_tm", startTime)
                         .withString(":end_tm", endTime).withString(":v", PostStatus.EXPIRED.toString()));
         try {
-            ItemCollection<ScanOutcome> items = table.scan(scanSpec);
+            ItemCollection<ScanOutcome> items = clientHelper.getPostTable().scan(scanSpec);
             return buildPostData(items);
         } catch (Exception e) {
             logger.error("Unable to scan the table:");

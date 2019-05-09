@@ -26,6 +26,7 @@ public class PostCleanUpUtility {
     private static final Logger logger = LoggerFactory.getLogger(PostCleanUpUtility.class.getName());
     private static final int EXPIRY_INTERVAL_IN_MIN = 10;
     private final ClientHelper clientHelper;
+
     public PostCleanUpUtility() {
         clientHelper = new ClientHelper();
     }
@@ -56,7 +57,7 @@ public class PostCleanUpUtility {
             }
 
             try {
-                TimeUnit.MINUTES.sleep(8);
+                TimeUnit.MINUTES.sleep(9); // better to have a little bit of overlap
             } catch (InterruptedException e) {
                 logger.warn("Post cleaning thread got interrupted during sleep.");
             }
