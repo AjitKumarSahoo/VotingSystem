@@ -82,7 +82,7 @@ public class VotingController {
     public ResponseEntity updatePost(@PathVariable String key, @RequestBody JsonNode jsonNode) {
         logger.info("Entered create for key: " + key);
         service.UpdatePost(key, jsonNode.get("OwnerId").asText(), jsonNode.get("EndDate").asText());
-        return new ResponseEntity(HttpStatus.CREATED);
+        return new ResponseEntity(HttpStatus.OK);
     }
 
     @RequestMapping(value = "/post/{key}",
@@ -100,5 +100,15 @@ public class VotingController {
         logger.info("Entered delete for key: " + key);
         service.deletePost(key);
         return new ResponseEntity(HttpStatus.NO_CONTENT);
+    }
+
+    @RequestMapping(value = "/vote/{key}",
+            method = RequestMethod.PUT,
+            consumes = "application/json",
+            produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity vote(@PathVariable String key, @RequestBody JsonNode jsonNode) {
+        logger.info("Entered create for key: " + key);
+        service.vote(key, jsonNode.get("UserId").asText(), jsonNode.get("Option").asText());
+        return new ResponseEntity(HttpStatus.OK);
     }
 }

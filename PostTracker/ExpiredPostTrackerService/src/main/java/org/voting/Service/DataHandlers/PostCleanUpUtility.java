@@ -38,38 +38,35 @@ public class PostCleanUpUtility {
      * Fetch expired posts (expired 10 minutes back) with status DONE and delete them
      */
     public void cleanUp() {
-        executorService.submit(new Runnable() {
-            @Override
-            public void run() {
-                while (true) {
+        executorService.submit(() -> {
+            while (true) {
+                try {
+                    clientHelper.makeSurePostTableExists();
+                    String startTime = DateUtility.getTimeBeforeNMinutes(EXPIRY_INTERVAL_IN_MIN);
+
+                    String projExpr = POST_ID_KEY + ", " + POST_END_DATE + ", " + POST_STATUS;
+                    ScanSpec scanSpec = new ScanSpec()
+                            .withProjectionExpression(projExpr)
+                            .withFilterExpression("#ed <= :tm AND #st = :v")
+                            .withNameMap(new NameMap().with("#ed", "EndDate").with("#st", POST_STATUS))
+                            .withValueMap(new ValueMap().withString(":tm", startTime).withString(":v", "DONE"));
+                    ItemCollection<ScanOutcome> items = clientHelper.getPostTable().scan(scanSpec);
+                    for (Item item : items) {
+                        clientHelper.getPostTable().deleteItem(POST_ID_KEY, item.getString(POST_ID_KEY));
+                        logger.info("Successfully deleted post " + item.toJSONPretty());
+                    }
+
                     try {
-                        clientHelper.makeSurePostTableExists();
-                        String startTime = DateUtility.getTimeBeforeNMinutes(EXPIRY_INTERVAL_IN_MIN);
-
-                        String projExpr = POST_ID_KEY + ", " + POST_END_DATE + ", " + POST_STATUS;
-                        ScanSpec scanSpec = new ScanSpec()
-                                .withProjectionExpression(projExpr)
-                                .withFilterExpression("#ed <= :tm AND #st = :v")
-                                .withNameMap(new NameMap().with("#ed", "EndDate").with("#st", POST_STATUS))
-                                .withValueMap(new ValueMap().withString(":tm", startTime).withString(":v", "DONE"));
-                        ItemCollection<ScanOutcome> items = clientHelper.getPostTable().scan(scanSpec);
-                        for (Item item : items) {
-                            clientHelper.getPostTable().deleteItem(POST_ID_KEY, item.getString(POST_ID_KEY));
-                            logger.info("Successfully deleted post " + item.toJSONPretty());
-                        }
-
-                        try {
-                            TimeUnit.MINUTES.sleep(8); // better to have a little bit of overlap with previous cleanup window
-                        } catch (InterruptedException e) {
-                            logger.warn("Post cleaning thread got interrupted during sleep.");
-                        }
-                    } catch (Exception e) {
-                        logger.error("Exception during post clean up.");
-                        logger.error(e.getMessage());
-                        try {
-                            TimeUnit.SECONDS.sleep(30);
-                        } catch (InterruptedException ignore) {
-                        }
+                        TimeUnit.MINUTES.sleep(8); // better to have a little bit of overlap with previous cleanup window
+                    } catch (InterruptedException e) {
+                        logger.warn("Post cleaning thread got interrupted during sleep.");
+                    }
+                } catch (Exception e) {
+                    logger.error("Exception during post clean up.");
+                    logger.error(e.getMessage());
+                    try {
+                        TimeUnit.SECONDS.sleep(30);
+                    } catch (InterruptedException ignore) {
                     }
                 }
             }

@@ -49,4 +49,8 @@ public class VotingService {
         dataHandler.updateEndDate(postId, ownerId, newEndDate);
     }
 
+    public void vote(String postId, String userId, String selectedOption) {
+        dataHandler.vote(postId, userId, selectedOption);
+    }
+
 }
