@@ -288,8 +288,8 @@ public class DataHandler implements IDataHandler {
 
     @Override
     public Post getPost(String postId) {
-        Table table = dynamoDB.getTable(POST_TABLE_NAME);
         try {
+            Table table = dynamoDB.getTable(POST_TABLE_NAME);
             String projectionExpression = POST_OWNER_EMAIL_ID + ", " + POST_OPTIONS + ", " + POST_USER_2_OPTION_MAP + ", " + POST_END_DATE;
             Item item = table.getItem(POST_ID_KEY, postId, projectionExpression, null);
             if (item == null) {
@@ -401,7 +401,7 @@ public class DataHandler implements IDataHandler {
     }
 
     private String getDateAsString(Date date) {
-        return DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX")
+        return DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
                     .withZone(ZoneOffset.UTC)
                     .format(date.toInstant());
     }
