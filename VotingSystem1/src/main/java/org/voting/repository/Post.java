@@ -19,4 +19,5 @@ public class Post {
     Map<String, String> user2OptionMap;
     String creationDate;
     String endDate;
+    String status;
 }

@@ -81,6 +81,8 @@ public class PostProcessor {
         private Map<String, Integer> getOption2CountMap(Map<String, String> user2optionMap) {
             Map<String, Integer> option2CountMap = new HashMap<>();
             for (String user : user2optionMap.keySet()) {
+                if (user.isEmpty())
+                    continue;
                 String option = user2optionMap.get(user);
                 if (option2CountMap.containsKey(option)) {
                     option2CountMap.put(option, option2CountMap.get(option) + 1);

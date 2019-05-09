@@ -44,9 +44,14 @@ public class DataHandler implements IDataHandler {
     private static final String POST_USER_2_OPTION_MAP = "User2OptionMap";
     private static final String POST_CREATION_DATE = "CreationDate";
     private static final String POST_END_DATE = "EndDate";
+    private static final String POST_STATUS = "Status";
 
     private NotificationHandler notificationHandler;
     private static DynamoDB dynamoDB;
+
+    private enum PostStatus {
+        NEW, EXPIRED, DONE
+    }
 
     @PostConstruct
     void init() {
@@ -187,7 +192,8 @@ public class DataHandler implements IDataHandler {
                     .withStringSet(POST_OPTIONS, new HashSet<>(post.getOptions()))
                     .withMap(POST_USER_2_OPTION_MAP, post.getUser2OptionMap())
                     .withString(POST_CREATION_DATE, post.getCreationDate())
-                    .withString(POST_END_DATE, post.getEndDate());
+                    .withString(POST_END_DATE, post.getEndDate())
+                    .withString(POST_STATUS, PostStatus.NEW.toString());
 
             PutItemOutcome putItemOutcome = table.putItem(item);
             logger.info("Successfully created a post: " + putItemOutcome);
@@ -300,7 +306,8 @@ public class DataHandler implements IDataHandler {
     public Post getPost(String postId) {
         try {
             Table table = dynamoDB.getTable(POST_TABLE_NAME);
-            String projectionExpression = POST_OWNER_EMAIL_ID + ", " + POST_OPTIONS + ", " + POST_USER_2_OPTION_MAP + ", " + POST_END_DATE;
+            String projectionExpression = POST_OWNER_EMAIL_ID + ", " + POST_OPTIONS + ", " + POST_USER_2_OPTION_MAP +
+                    ", " + POST_END_DATE + ", " + POST_STATUS;
             Item item = table.getItem(POST_ID_KEY, postId, projectionExpression, null);
             if (item == null) {
                 logger.warn("Post with " + postId + " is not present in " + POST_TABLE_NAME);
@@ -317,9 +324,8 @@ public class DataHandler implements IDataHandler {
             post.setOptions(item.getStringSet(POST_OPTIONS));
             post.setUser2OptionMap(item.getMap(POST_USER_2_OPTION_MAP));
             post.setEndDate(item.getJSON(POST_END_DATE));
-
+            post.setStatus(item.getJSON(POST_STATUS));
             return post;
-
         } catch (Exception e) {
             logger.error("Retrieving post with id " + postId + " failed.");
             logger.error(e.getMessage());
@@ -386,6 +392,10 @@ public class DataHandler implements IDataHandler {
 
             if (newEndDate == null || post.getCreationDate().compareTo(getFormattedEndDate(newEndDate)) >= 0) {
                 throw new RuntimeException("Post's end date " + newEndDate + " can't be older or equal to creation date: " + post.getCreationDate());
+            }
+
+            if (PostStatus.DONE.toString().equals(post.getStatus())) {
+                throw new RuntimeException("An expired post can't be modified.");
             }
 
             String formattedEndDate = getFormattedEndDate(newEndDate);
