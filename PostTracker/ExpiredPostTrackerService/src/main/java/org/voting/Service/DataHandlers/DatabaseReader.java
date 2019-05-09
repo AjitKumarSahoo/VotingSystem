@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.voting.ClientHelper;
 import org.voting.PostData;
-import org.voting.PostStatus;
 import org.voting.DateUtility;
 
 import java.util.ArrayList;
@@ -22,7 +21,7 @@ public class DatabaseReader {
 
     private static final Logger logger = LoggerFactory.getLogger(DatabaseReader.class.getName());
 
-    private static final int EXPIRY_INTERVAL_IN_MIN = 2 * 60 * 1000;
+    private static final int EXPIRY_INTERVAL_IN_MIN = 2;
     static final String POST_ID_KEY = "PostId";
     static final String POST_STATUS = "Status";
     static final String POST_END_DATE = "EndDate";
@@ -46,13 +45,11 @@ public class DatabaseReader {
 
         String projExpr = POST_ID_KEY + ", " + POST_OWNER_EMAIL_ID + ", " +
                 POST_USER_2_OPTION_MAP + ", " + POST_END_DATE + ", "  + POST_STATUS;
-
         ScanSpec scanSpec = new ScanSpec()
                 .withProjectionExpression(projExpr)
-                .withFilterExpression("#ed between :start_tm and :end_tm AND #st = :v")
-                .withNameMap(new NameMap().with("#ed", "EndDate").with("#st", POST_STATUS))
-                .withValueMap(new ValueMap().withString(":start_tm", startTime)
-                        .withString(":end_tm", endTime).withString(":v", PostStatus.EXPIRED.toString()));
+                .withFilterExpression("#ed between :start_tm and :end_tm")
+                .withNameMap(new NameMap().with("#ed", "EndDate"))
+                .withValueMap(new ValueMap().withString(":start_tm", startTime).withString(":end_tm", endTime));
         try {
             ItemCollection<ScanOutcome> items = clientHelper.getPostTable().scan(scanSpec);
             return buildPostData(items);

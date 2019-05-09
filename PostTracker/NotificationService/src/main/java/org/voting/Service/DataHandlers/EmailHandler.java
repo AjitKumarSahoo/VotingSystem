@@ -46,6 +46,7 @@ public class EmailHandler {
 
                 Transport.send(message);
                 logger.info("Successfully sent email to " + emailId + " for post: " + postId);
+                break;
             } catch (MessagingException e) {
                 if (--retryCount == 0) {
                     logger.error("Failed to send email to " + emailId + " for post " + postId +

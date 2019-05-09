@@ -58,7 +58,7 @@ public class DatabaseReader {
                 break;
             } catch (ResourceNotFoundException ignored) {
                 try {
-                    TimeUnit.SECONDS.sleep(11); // try after 11 seconds
+                    TimeUnit.SECONDS.sleep(5); // try after 5 seconds
                 } catch (InterruptedException ignored1) {
                 }
             }

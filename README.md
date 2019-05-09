@@ -8,7 +8,7 @@ There are totally 3 services present in this voting system. PostTracker project 
 * Voting Service
   * It exposes all the Rest APIs to client
   * When an owner creates a post, the service creates a post entry with status NEW in the PostInfo table in Amazon DynamoDB and then it notifies all the participants in the post through email
-  * When a participant votes, the service directly updates the User2OptionMap present in the post entry in PostInfo table
+  * When a participant votes the service directly updates the User2OptionMap in the post entry in PostInfo table
 
 * Post Tracker Service
   * Singleton service that reads latest expired posts from PostInfo table

@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.voting.ClientHelper;
 import org.voting.DateUtility;
-import org.voting.PostStatus;
 
 import java.util.concurrent.TimeUnit;
 
@@ -43,8 +42,7 @@ public class PostCleanUpUtility {
                     .withProjectionExpression(projExpr)
                     .withFilterExpression("#ed <= :tm AND #st = :v")
                     .withNameMap(new NameMap().with("#ed", "EndDate").with("#st", POST_STATUS))
-                    .withValueMap(new ValueMap().withString(":tm", startTime)
-                            .withString(":v", PostStatus.DONE.toString()));
+                    .withValueMap(new ValueMap().withString(":tm", startTime).withString(":v", "DONE"));
             try {
                 ItemCollection<ScanOutcome> items = clientHelper.getPostTable().scan(scanSpec);
                 for (Item item : items) {

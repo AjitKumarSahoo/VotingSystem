@@ -27,7 +27,7 @@ public class PostProcessor {
     private final DatabaseReader databaseReader;
 
     public PostProcessor() {
-        executorService = Executors.newFixedThreadPool(100); // need to configure based upon system usage
+        executorService = Executors.newFixedThreadPool(10); // need to configure based upon system usage
         queueHandler = new MessageQueueHandler();
         databaseReader = new DatabaseReader();
     }
