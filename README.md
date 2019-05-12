@@ -15,11 +15,11 @@ There are totally 3 services present in this voting system. PostTracker project 
   * Multithreaded service where each thread: 
     * Processes an expired post to calculate the winner option
     * Sends a message to PostQueue (Amazon SQS) with relevant info
-  * Has a dedicated clean up thread that runs periodically and deletes posts which have expired and have status DONE 
+  * Has a dedicated clean up thread that runs periodically and deletes posts with status DONE 
 
 * Notification Service
   * Reads messages from PostQueue
   * Multithreaded service where each thread: 
     * Processes one message
-    * Send winner email to post owner
+    * Sends winner email to post owner
     * Updates the post status to DONE in PostInfo table 
